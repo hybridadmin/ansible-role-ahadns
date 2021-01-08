@@ -1,0 +1,42 @@
+---
+
+# iptables legacy fix: https://lowendspirit.com/iptables-restore-v1-8-4-legacy-couldnt-load-match-limit-no-such-file-or-directory
+- name: iptables legacy fix
+  shell: |
+    set -o pipefail
+    update-alternatives --set iptables /usr/sbin/iptables-legacy
+    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+#    update-alternatives --set arptables /usr/sbin/arptables-legacy
+#    update-alternatives --set ebtables /usr/sbin/ebtables-legacy
+  args:
+    executable: /bin/bash
+  become: true
+  changed_when: false
+  when: ansible_os_family == "Debian"
+
+- name: iptables restore v4
+  shell: |
+    set -o pipefail
+    iptables-restore < /etc/iptables/rules.v4
+  args:
+    executable: /bin/bash
+  become: true
+  register: reload_ipv4
+  until: reload_ipv4.rc == 0
+  retries: 2
+  delay: 1
+  ignore_errors: no
+  changed_when: false
+  when: ansible_os_family == "Debian"
+
+- name: iptables restore v6
+  shell: |
+    set -o pipefail
+    ip6tables-restore < /etc/iptables/rules.v6
+  args:
+    executable: /bin/bash
+  become: true
+  changed_when: false
+  when:
+  - ansible_default_ipv6.interface is defined
+  - ansible_os_family == "Debian"

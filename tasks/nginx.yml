@@ -1,0 +1,132 @@
+---
+
+- name: Configure Nginx
+  block:
+    - name: Configure Nginx stapling
+      template:
+        src: nginx/conf.d/stapling.conf.j2
+        dest: /etc/nginx/conf.d/stapling.conf
+        mode: "0644"
+        force: yes
+
+    - name: Enable Nginx streams
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        insertafter: "include \/etc\/nginx\/modules-enabled"
+        line: "include /etc/nginx/streams-enabled/*;"
+        state: present
+
+    - name: "Create Nginx streams directory"
+      file:
+        path: /etc/nginx/streams-enabled
+        state: directory
+        mode: "0755"
+
+    - name: Secure Nginx TLS versions
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "ssl_protocols "
+        line: ssl_protocols TLSv1.2 TLSv1.3;
+        state: present
+
+    - name: Configure Nginx to not prefer server ciphers
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "ssl_prefer_server_ciphers "
+        line: ssl_prefer_server_ciphers off;
+        state: present
+
+    - name: Increase Nginx worker_connections to 10000
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: "worker_connections "
+        line: worker_connections 10000;
+        state: present
+
+    - name: Configure default Nginx site
+      template:
+        src: nginx/sites-available/default.j2
+        dest: /etc/nginx/sites-available/default
+        mode: "0644"
+        force: yes
+
+    - name: Enable default site
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+
+# letsencrypt
+- debug:
+    msg: "{{ letsencrypt_ssl_certs }}"
+
+- name: Check if SSL cert exist
+  stat:
+    path: "{{ item.path }}"
+  register: ssl_certs_exist
+  with_items:
+    - "{{ letsencrypt_ssl_certs }}"
+
+- debug:
+    msg: "{{ ssl_certs_exist }}"
+
+- name: Generating LetsEncrypt SSL
+  include_role:
+    name: geerlingguy.certbot
+  vars:
+    certbot_create_if_missing: yes
+    certbot_create_method: standalone
+    certbot_admin_email: "{{ letsencrypt_email }}"
+    certbot_auto_renew: true
+    certbot_auto_renew_hour: "3"
+    certbot_auto_renew_minute: "30"
+    certbot_auto_renew_user: root
+    certbot_auto_renew_options: '--quiet --no-self-upgrade --pre-hook "systemctl stop nginx" --post-hook "systemctl start nginx"'
+    certbot_certs:
+      - domains:
+          - "{{ item.item.fqdn }}"
+    certbot_create_standalone_stop_services:
+      - nginx
+  when:
+    - ansible_virtualization_type != "docker"
+    - not item.stat.exists
+  loop: "{{ ssl_certs_exist.results }}"
+
+- name: Copy Nginx configs
+  block:
+    - name: Configure site in nginx
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+        force: yes
+      with_items:
+        - "{{ nginx_conf_files }}"
+
+    - name: Enable sites in nginx
+      file:
+        src: "{{ item.dest }}"
+        dest: "{{ item.link }}"
+        state: link
+      with_items:
+        - "{{ nginx_conf_files }}"
+
+- name: Check if dhparams exist
+  stat:
+    path: /etc/letsencrypt/aha-dhparams.pem
+  register: dhparams_exist
+
+- name: Generate 4096-bit aha-dhparams.pem (This can take a while!)
+  shell: |
+    set -o pipefail
+    openssl dhparam -out /etc/letsencrypt/aha-dhparams.pem 4096
+  args:
+    executable: /bin/bash
+  become: true
+  when: not dhparams_exist.stat.exists
+
+- name: Restart Nginx
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: nginx

@@ -1,0 +1,21 @@
+---
+
+- name: list required packages
+  debug:
+    msg: "{{ pkg_requirements }}"
+
+- name: install requirements
+  package:
+    name: "{{ pkg_requirements }}"
+    state: present
+  register: pkg_install_requirements
+  until: pkg_install_requirements is succeeded
+  retries: 3
+
+- name: Enable services
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+  with_items:
+    - nginx
+    - unbound

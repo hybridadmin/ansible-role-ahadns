@@ -1,2 +1,72 @@
 ---
-# tasks file for ansible-role-test1
+# tasks file for ansible-role-ahadns
+
+- debug:
+    msg: "Identified machine with {{ num_cores }} cpu cores and {{ total_ram_mb }}mb RAM"
+
+- name: Wait for systemd to complete initialization. # noqa 303
+  command: systemctl is-system-running
+  register: systemctl_status
+  until: >
+    'running' in systemctl_status.stdout or
+    'degraded' in systemctl_status.stdout
+  retries: 30
+  delay: 5
+  when: (ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora')
+  changed_when: false
+
+- name: update apt cache
+  apt:
+    update_cache: yes
+  changed_when: false
+  when: ansible_os_family == 'Debian'
+
+- name: install fedora required packages
+  package:
+    name:
+      - procps-ng
+    state: present
+  when: ansible_distribution == 'Fedora'
+
+- name: Populate service facts
+  shell: |
+    set -o pipefail
+    systemctl list-unit-files --no-pager --type service --all | grep -E 'systemd-resolved|^UNIT'
+  args:
+    executable: /bin/bash
+  check_mode: no
+  changed_when: false
+  register: systemd_resolved_status
+
+- name: Update /etc/hosts
+  become: true
+  blockinfile:
+    path: /etc/hosts
+    create: yes
+    block: |
+      127.0.0.1 localhost
+      127.0.1.1   {{ ansible_hostname }}.localdomain    {{ ansible_hostname }}
+
+      # The following lines are desirable for IPv6 capable hosts
+      ::1 ip6-localhost ip6-loopback
+      fe00::0 ip6-localnet
+      ff00::0 ip6-mcastprefix
+      ff02::1 ip6-allnodes
+      ff02::2 ip6-allrouters
+      ff02::3 ip6-allhosts
+
+      {{ ansible_default_ipv4.address }} {{ server_fqdn }}  {{ doh_endpoint }}  {{ dot_endpoint }}
+  when: ansible_virtualization_type != "docker"
+
+- name: disable systemd-resolved
+  include: systemd-resolved.yml
+  when: ('enabled' in systemd_resolved_status.stdout)
+
+- name: package installation
+  include: install.yml
+
+- name: start configuration
+  include: configure.yml
+
+- name: start nginx configuration
+  include: nginx.yml

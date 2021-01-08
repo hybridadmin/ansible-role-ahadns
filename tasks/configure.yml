@@ -1,0 +1,119 @@
+---
+
+#- name: "Create /etc/ahadns directory"
+#  file:
+#    path: /etc/ahadns
+#    state: directory
+#    mode: "0755"
+
+- name: "checking directories exist"
+  stat:
+    path: "{{ item }}"
+  register: folder_stats
+  loop: "{{ required_dirs }}"
+
+- name: "creating required directories"
+  file:
+    path: "{{ item.item.name }}"
+    state: directory
+    mode: "{{ item.item.perms }}"
+    group: root
+    owner: root
+  when: not item.stat.exists
+  loop: "{{ folder_stats.results }}"
+
+- name: add configuration files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    force: yes
+  loop: "{{ config_templates }}"
+  register: config_files
+
+- name: Fix windows CR/LF line endings in config files
+  replace:
+    path: "{{ item.dest }}"
+    regexp: "\r"
+  loop: "{{ config_templates }}"
+
+- name: Reload sysctl
+  shell: |
+    set -o pipefail
+    sysctl -p /etc/sysctl.d/99-ahadns-sysctl.conf
+  args:
+      executable: /bin/bash
+  become: true
+  changed_when: false
+  ignore_errors: yes
+
+- name: Increase max open files for system/users
+  lineinfile:
+    path: "{{ item.name }}"
+    regexp: "DefaultLimitNOFILE"
+    line: DefaultLimitNOFILE=256000:1000000
+    state: present
+  loop:
+    - { name: "/etc/systemd/system.conf" }
+    - { name: "/etc/systemd/user.conf" }
+
+- name: Make sure that *.conf files are included in unbound.conf
+  lineinfile:
+    path: "{{ unbound_config_dir }}/unbound/unbound.conf"
+    state: present
+    regexp: '^include:.\*\.conf\"$'
+    line: 'include: "{{ unbound_config_dir }}/unbound/unbound.conf.d/*.conf"'
+
+- name: download root hints
+  shell: |
+    set -o pipefail
+    wget http://www.internic.net/domain/named.root -O "/var/lib/unbound/root.hints"
+    chmod 0644 "/var/lib/unbound/root.hints"
+  args:
+    executable: /bin/bash
+  check_mode: no
+  changed_when: false
+
+- name: run unbound-anchor
+  shell: |
+    set -o pipefail
+    unbound-anchor -v
+  environment:
+    LD_LIBRARY_PATH: /usr/local/lib
+  args:
+    executable: /bin/bash
+  register: trust_anchors_setup
+  check_mode: no
+  changed_when: false
+  failed_when: trust_anchors_setup.rc != 1 and trust_anchors_setup.rc != 0
+
+- name: Execute scripts to test functionality
+  shell:  |
+    set -o pipefail
+    {{ item }}
+  args:
+    executable: /bin/bash
+  changed_when: false
+  with_items:
+    - /etc/ahadns/unbound_update.sh
+    - /etc/ahadns/ahadns_log_purge.sh
+    - /etc/ahadns/unbound_root_hints.sh
+
+- name: test unbound configuration
+  shell:  |
+    set -o pipefail
+    unbound-checkconf "{{ unbound_config_dir }}/unbound/unbound.conf"
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: systemctl daemon-reload
+  systemd:
+    daemon_reload: yes
+
+- name: restart unbound
+  systemd:
+    name: unbound
+    state: restarted
+    daemon_reload: yes
+  changed_when: False

@@ -1,2 +1,68 @@
 ---
-# vars file for ansible-role-test1
+# vars file for ansible-role-ahadns
+
+# unbound config/executable directories
+unbound_config_dir: /etc
+unbound_lib_dir: /var/lib
+unbound_bin_dir: /usr/sbin
+#unbound_bin_dir: /usr/local/sbin
+
+num_cores: "{{ [ansible_processor_cores, ansible_processor_count, ansible_processor_vcpus] | max | int }}"
+total_ram_mb: "{{ ansible_memtotal_mb }}"
+msg_cache_mb: 256
+
+required_dirs:
+  - {name: "/etc/ahadns", perms: "0755"}
+#  - {name: "/etc/nginx/streams-enabled", perms: "0755"}
+
+config_templates:
+  - {src: "sysctl.d/99-ahadns-sysctl.conf.j2", dest: "/etc/sysctl.d/99-ahadns-sysctl.conf", mode: "0644"}
+  - {src: "limits.d/99-ahadns-limits.conf.j2", dest: "/etc/security/limits.d/99-ahadns-limits.conf", mode: "0644"}
+  - {src: "unbound/ahadns.conf.j2", dest: "{{ unbound_config_dir }}/unbound/unbound.conf.d/ahadns.conf", mode: "0644"}
+  - {src: "bash/unbound_update.sh.j2", dest: "/etc/ahadns/unbound_update.sh", mode: "0744"}
+  - {src: "bash/unbound_root_hints.sh.j2", dest: "/etc/ahadns/unbound_root_hints.sh", mode: "0744"}
+  - {src: "bash/ahadns_log_purge.sh.j2", dest: "/etc/ahadns/ahadns_log_purge.sh", mode: "0744"}
+  - {src: "cron.d/ahadns.j2", dest: "/etc/cron.d/ahadns", mode: "0644"}
+#  - {src: "iptables/rules.v4.j2", dest: "/etc/iptables/rules.v4", mode: "0644"}
+#  - {src: "iptables/rules.v6.j2", dest: "/etc/iptables/rules.v6", mode: "0644"}
+
+letsencrypt_ssl_certs:
+  - { fqdn: "{{ server_fqdn }}", path: "/etc/letsencrypt/live/{{ server_fqdn }}/privkey.pem"}
+  - { fqdn: "{{ dot_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem"}
+  - { fqdn: "{{ doh_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem" }
+
+nginx_conf_files:
+  - { src: "nginx/sites-available/web.j2", dest: "/etc/nginx/sites-available/web", mode: "0644", link: "/etc/nginx/sites-enabled/web" }
+  - { src: "nginx/sites-available/doh.j2", dest: "/etc/nginx/sites-available/doh", mode: "0644", link: "/etc/nginx/sites-enabled/doh" }
+  - { src: "nginx/sites-available/dot.j2", dest: "/etc/nginx/sites-available/dot", mode: "0644", link: "/etc/nginx/sites-enabled/dot" }
+
+_pkg_requirements:
+  default:
+    - curl
+    - wget
+    - iptables
+    - unbound
+    - nginx
+    - make
+  Ubuntu:
+    - openssl
+#    - resolvconf
+    - iptables-persistent
+    - unattended-upgrades
+    - apt-listchanges
+    - bsd-mailx
+    - apt-transport-https  
+  Debian:
+    - openssl
+#    - resolvconf
+    - iptables-persistent
+    - unattended-upgrades
+    - apt-listchanges
+    - bsd-mailx
+    - apt-transport-https
+  RedHat:
+    - openssl
+  CentOS:
+    - openssl
+
+pkg_requirements: "{{ _pkg_requirements['default'] + _pkg_requirements[ansible_distribution] }}"

@@ -1,2 +1,15 @@
 ---
-# defaults file for ansible-role-test1
+# defaults file for ansible-role-ahadns
+
+server_fqdn: "dns-server.com"
+doh_endpoint: "doh.{{ server_fqdn }}"
+dot_endpoint: "dot.{{ server_fqdn }}"
+
+letsencrypt_email: "test@test.com"
+
+etc_hosts_entries: 
+  {
+    "{{ server_fqdn }}": "{{ ansible_default_ipv4.address }}",
+    "{{ doh_endpoint }}": "{{ ansible_default_ipv4.address }}",
+    "{{ dot_endpoint }}": "{{ ansible_default_ipv4.address }}"
+  }
