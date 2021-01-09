@@ -63,7 +63,8 @@ server {
     listen 443 http2 ssl reuseport;
     ssl_certificate /etc/letsencrypt/live/{{doh_endpoint}}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{doh_endpoint}}/privkey.pem;
-    ssl_dhparam /etc/letsencrypt/aha-dhparams.pem;
+    ssl_dhparam /etc/ssl/certs/aha-dhparams.pem;
+#    ssl_dhparam /etc/letsencrypt/aha-dhparams.pem;
 }
 server {
     if ($host = {{doh_endpoint}}) {

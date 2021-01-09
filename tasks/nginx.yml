@@ -113,20 +113,35 @@
 
 - name: Check if dhparams exist
   stat:
-    path: /etc/letsencrypt/aha-dhparams.pem
+    path: /etc/ssl/certs/aha-dhparams.pem
   register: dhparams_exist
 
 - name: Generate 4096-bit aha-dhparams.pem (This can take a while!)
   shell: |
     set -o pipefail
-    openssl dhparam -out /etc/letsencrypt/aha-dhparams.pem 4096
+    openssl dhparam -out /etc/ssl/certs/aha-dhparams.pem 4096
   args:
     executable: /bin/bash
   become: true
-  when: not dhparams_exist.stat.exists
+  when:
+    - nginx_dhparam_harden
+    - not dhparams_exist.stat.exists
+
+# check nginx conf before service restart
+- name: test nginx config
+  shell: |
+    set -o pipefail
+    nginx -t
+  args:
+    executable: /bin/bash
+  register: nginx_test
+  become: true
+  changed_when: false
+  ignore_errors: yes
 
 - name: Restart Nginx
   systemd:
     state: restarted
     daemon_reload: yes
     name: nginx
+  ignore_errors: yes

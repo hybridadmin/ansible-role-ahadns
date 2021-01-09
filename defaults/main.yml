@@ -1,15 +1,22 @@
 ---
 # defaults file for ansible-role-ahadns
 
+# doh server variables
+doh_version: 2.2.4
+
+# golang variables
+golang_ver: "1.15.6"
+golang_path: /opt
+
+# .NET SDK variables
+dotnet_version: 5.0
+
+# Aha.Dns.Statistics variables
+stats_api_version: 1.0.1
+
+# Letsencrypt variables
 server_fqdn: "dns-server.com"
 doh_endpoint: "doh.{{ server_fqdn }}"
 dot_endpoint: "dot.{{ server_fqdn }}"
 
 letsencrypt_email: "test@test.com"
-
-etc_hosts_entries: 
-  {
-    "{{ server_fqdn }}": "{{ ansible_default_ipv4.address }}",
-    "{{ doh_endpoint }}": "{{ ansible_default_ipv4.address }}",
-    "{{ dot_endpoint }}": "{{ ansible_default_ipv4.address }}"
-  }

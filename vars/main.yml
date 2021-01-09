@@ -31,10 +31,11 @@ letsencrypt_ssl_certs:
   - { fqdn: "{{ dot_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem"}
   - { fqdn: "{{ doh_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem" }
 
+nginx_dhparam_harden: False
 nginx_conf_files:
   - { src: "nginx/sites-available/web.j2", dest: "/etc/nginx/sites-available/web", mode: "0644", link: "/etc/nginx/sites-enabled/web" }
   - { src: "nginx/sites-available/doh.j2", dest: "/etc/nginx/sites-available/doh", mode: "0644", link: "/etc/nginx/sites-enabled/doh" }
-  - { src: "nginx/sites-available/dot.j2", dest: "/etc/nginx/sites-available/dot", mode: "0644", link: "/etc/nginx/sites-enabled/dot" }
+  - { src: "nginx/sites-available/dot.j2", dest: "/etc/nginx/sites-available/dot", mode: "0644", link: "/etc/nginx/streams-enabled/dot" }
 
 _pkg_requirements:
   default:
@@ -46,6 +47,7 @@ _pkg_requirements:
     - make
   Ubuntu:
     - openssl
+    - uuid-runtime
 #    - resolvconf
     - iptables-persistent
     - unattended-upgrades
@@ -54,6 +56,7 @@ _pkg_requirements:
     - apt-transport-https  
   Debian:
     - openssl
+    - uuid-runtime
 #    - resolvconf
     - iptables-persistent
     - unattended-upgrades
@@ -62,7 +65,9 @@ _pkg_requirements:
     - apt-transport-https
   RedHat:
     - openssl
+    - util-linux
   CentOS:
     - openssl
+    - util-linux
 
 pkg_requirements: "{{ _pkg_requirements['default'] + _pkg_requirements[ansible_distribution] }}"

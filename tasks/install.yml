@@ -5,9 +5,8 @@
     msg: "{{ pkg_requirements }}"
 
 - name: install requirements
-  package:
-    name: "{{ pkg_requirements }}"
-    state: present
+  action: >
+    {{ ansible_pkg_mgr }} name={{ pkg_requirements }} state=present update_cache=yes
   register: pkg_install_requirements
   until: pkg_install_requirements is succeeded
   retries: 3

@@ -1,0 +1,11 @@
+---
+# defaults file for ansible-role-ahadns
+
+golang_version: 1.15.6
+m13253-doh
+
+server_fqdn: "dns-server.com"
+doh_endpoint: "doh.{{ server_fqdn }}"
+dot_endpoint: "dot.{{ server_fqdn }}"
+
+letsencrypt_email: "test@test.com"

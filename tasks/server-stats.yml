@@ -1,0 +1,117 @@
+---
+
+- name: setup microsoft repo
+  block:
+  - name: add microsoft package repo on ubuntu
+    shell: |
+      set -o pipefail
+      wget https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+      sudo dpkg -i /tmp/packages-microsoft-prod.deb
+    args:
+      executable: /bin/bash
+    become: true
+    changed_when: false
+    when: ansible_distribution == 'Ubuntu'
+
+  - name: add microsoft package repo on centos
+    shell: |
+      set -o pipefail
+      sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+    args:
+      executable: /bin/bash
+    become: true
+    changed_when: false
+    when: ansible_distribution == 'CentOS' and ansible_distribution_major_version | int <= 7
+
+  - name: add microsoft package repo on debian
+    shell: |
+      set -o pipefail
+      wget https://packages.microsoft.com/config/debian/{{ ansible_distribution_major_version }}/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+      sudo dpkg -i packages-microsoft-prod.deb
+    args:
+      executable: /bin/bash
+    become: true
+    changed_when: false
+    when: ansible_distribution == 'Debian'
+
+- name: install .NET SDK
+  action: >
+    {{ ansible_pkg_mgr }} name=dotnet-sdk-{{ dotnet_version }} state=present update_cache=yes
+
+
+- name: Setup AhaDNS server statistics API
+  block:
+    - name: Download AhaDNS statistics API version {{ stats_api_version }}
+      get_url:
+        url: https://github.com/AhaDNS/Aha.Dns.Statistics/archive/v{{ stats_api_version }}.tar.gz
+        dest: /tmp/aha-statistics-v{{ stats_api_version }}.tar.gz
+        mode: "0644"
+        force: yes
+
+    - name: Remove folder /opt/aha-dns-statisticsapi/
+      file:
+        path: /opt/aha-dns-statisticsapi/
+        state: absent
+      changed_when: false
+
+    - name: Create folder /opt/aha-dns-statisticsapi/
+      file:
+        path: /opt/aha-dns-statisticsapi/
+        state: directory
+        mode: "0755"
+      changed_when: false
+
+    - name: Unpack AhaDNS statistics API version {{ stats_api_version }}
+      unarchive:
+        src: /tmp/aha-statistics-v{{ stats_api_version }}.tar.gz
+        dest: /opt/aha-dns-statisticsapi/
+        remote_src: yes
+      changed_when: false
+
+    - name: Build AhaDNS statistics API version {{ stats_api_version }}
+      shell: >
+        /usr/bin/dotnet publish
+        --configuration Release
+        /opt/aha-dns-statisticsapi/Aha.Dns.Statistics-{{ stats_api_version }}/src/Aha.Dns.Statistics.ServerApi
+        --output
+        /opt/aha-dns-statisticsapi/
+      changed_when: false
+
+    - name: generate AhaDNS server statistics api key
+      shell: |
+        set -o pipefail
+        uuidgen
+      args:
+        executable: /bin/bash
+      register: stats_api_key
+      become: true
+      changed_when: false
+
+    - name: Configure AhaDNS statistics API key
+      lineinfile:
+        path: /opt/aha-dns-statisticsapi/appsettings.json
+        regexp: '"ApiKey": ".*.",'
+        line: '"ApiKey": "{{ stats_api_key.stdout }}",'
+        state: present
+      changed_when: false
+
+    - name: Create aha-dns-statisticsapi service
+      template:
+        src: systemd/aha-dns-statisticsapi.service.j2
+        dest: /etc/systemd/system/aha-dns-statisticsapi.service
+        mode: "0644"
+        force: yes
+      changed_when: false
+
+    - name: Enable aha-dns-statisticsapi service
+      systemd:
+        name: aha-dns-statisticsapi
+        enabled: yes
+      changed_when: false
+
+    - name: Restart aha-dns-statisticsapi service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: aha-dns-statisticsapi
+      changed_when: false

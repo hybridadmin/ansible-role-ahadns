@@ -15,11 +15,11 @@
   when: (ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora')
   changed_when: false
 
-- name: update apt cache
-  apt:
-    update_cache: yes
-  changed_when: false
-  when: ansible_os_family == 'Debian'
+#- name: update apt cache
+#  apt:
+#    update_cache: yes
+#  changed_when: false
+#  when: ansible_os_family == 'Debian'
 
 - name: install fedora required packages
   package:
@@ -62,11 +62,20 @@
   include: systemd-resolved.yml
   when: ('enabled' in systemd_resolved_status.stdout)
 
-- name: package installation
+- name: start package install
   include: install.yml
 
-- name: start configuration
+- name: start server config
   include: configure.yml
 
-- name: start nginx configuration
+- name: start nginx config
   include: nginx.yml
+
+- name: start golang install
+  include: golang.yml
+
+- name: start doh-server install
+  include: doh-server.yml
+
+- name: start dns stats install
+  include: server-stats.yml
