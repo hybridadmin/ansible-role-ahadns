@@ -15,12 +15,6 @@
   when: (ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora')
   changed_when: false
 
-#- name: update apt cache
-#  apt:
-#    update_cache: yes
-#  changed_when: false
-#  when: ansible_os_family == 'Debian'
-
 - name: install fedora required packages
   package:
     name:
@@ -38,26 +32,6 @@
   changed_when: false
   register: systemd_resolved_status
 
-- name: Update /etc/hosts
-  become: true
-  blockinfile:
-    path: /etc/hosts
-    create: yes
-    block: |
-      127.0.0.1 localhost
-      127.0.1.1   {{ ansible_hostname }}.localdomain    {{ ansible_hostname }}
-
-      # The following lines are desirable for IPv6 capable hosts
-      ::1 ip6-localhost ip6-loopback
-      fe00::0 ip6-localnet
-      ff00::0 ip6-mcastprefix
-      ff02::1 ip6-allnodes
-      ff02::2 ip6-allrouters
-      ff02::3 ip6-allhosts
-
-      {{ ansible_default_ipv4.address }} {{ server_fqdn }}  {{ doh_endpoint }}  {{ dot_endpoint }}
-  when: ansible_virtualization_type != "docker"
-
 - name: disable systemd-resolved
   include: systemd-resolved.yml
   when: ('enabled' in systemd_resolved_status.stdout)
@@ -67,6 +41,9 @@
 
 - name: start server config
   include: configure.yml
+
+- name: start ssl config
+  include: ssl-certs.yml
 
 - name: start nginx config
   include: nginx.yml

@@ -26,10 +26,14 @@ config_templates:
 #  - {src: "iptables/rules.v4.j2", dest: "/etc/iptables/rules.v4", mode: "0644"}
 #  - {src: "iptables/rules.v6.j2", dest: "/etc/iptables/rules.v6", mode: "0644"}
 
+#letsencrypt_ssl_certs:
+#  - { fqdn: "{{ server_fqdn }}", path: "/etc/letsencrypt/live/{{ server_fqdn }}/privkey.pem"}
+#  - { fqdn: "{{ dot_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem"}
+#  - { fqdn: "{{ doh_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem" }
 letsencrypt_ssl_certs:
-  - { fqdn: "{{ server_fqdn }}", path: "/etc/letsencrypt/live/{{ server_fqdn }}/privkey.pem"}
-  - { fqdn: "{{ dot_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem"}
-  - { fqdn: "{{ doh_endpoint }}", path: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem" }
+  - { fqdn: "{{ server_fqdn }}", privkey: "/etc/letsencrypt/live/{{ server_fqdn }}/privkey.pem", cert: "/etc/letsencrypt/live/{{ server_fqdn }}/fullchain.pem" }
+  - { fqdn: "{{ dot_endpoint }}", privkey: "/etc/letsencrypt/live/{{ dot_endpoint }}/privkey.pem", cert: "/etc/letsencrypt/live/{{ dot_endpoint }}/fullchain.pem" }
+  - { fqdn: "{{ doh_endpoint }}", privkey: "/etc/letsencrypt/live/{{ doh_endpoint }}/privkey.pem", cert: "/etc/letsencrypt/live/{{ doh_endpoint }}/fullchain.pem" }
 
 nginx_dhparam_harden: False
 nginx_conf_files:
