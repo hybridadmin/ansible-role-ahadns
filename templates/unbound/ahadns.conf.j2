@@ -146,8 +146,8 @@ server:
     so-reuseport: yes
     
     # Increase number of file descriptors
-    outgoing-range: 8192
-    num-queries-per-thread: 4096
+    outgoing-range: "{{ (num_queries_per_thread | int) * 2 }}"
+    num-queries-per-thread: "{{ num_queries_per_thread }}"
 
 #
 # End of AhaDNS unbound config

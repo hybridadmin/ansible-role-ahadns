@@ -10,6 +10,7 @@ unbound_bin_dir: /usr/sbin
 num_cores: "{{ [ansible_processor_cores, ansible_processor_count, ansible_processor_vcpus] | max | int }}"
 total_ram_mb: "{{ ansible_memtotal_mb }}"
 msg_cache_mb: 256
+num_queries_per_thread: 4096
 
 required_dirs:
   - {name: "/etc/ahadns", perms: "0755"}
