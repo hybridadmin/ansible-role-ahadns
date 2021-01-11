@@ -13,7 +13,7 @@ galaxy_info:
        - focal
        - bionic
 
-  galaxy_tags: []
+  galaxy_tags:
     - dns
     - ahadns
     - dot
