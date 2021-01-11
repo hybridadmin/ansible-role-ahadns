@@ -38,6 +38,6 @@ stream {
         listen [::]:853 ssl reuseport;
         ssl_certificate /etc/letsencrypt/live/{{dot_endpoint}}/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/{{dot_endpoint}}/privkey.pem;
-        ssl_dhparam /etc/ssl/certs/aha-dhparams.pem;
+        ssl_dhparam /etc/nginx/ssl/aha-dhparams.pem;
     }
 }

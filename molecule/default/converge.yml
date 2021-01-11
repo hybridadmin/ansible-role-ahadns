@@ -1,12 +1,10 @@
 ---
 - name: Converge
   hosts: all
+  vars:
+    dhparam_key_size: 2048
+    dhparam_remote_get: true
   tasks:
-    - name: update apt cache
-      apt:
-        update_cache: yes
-      changed_when: false
-      when: ansible_os_family == 'Debian'
 
     - name: "Include ansible-role-ahadns"
       include_role:

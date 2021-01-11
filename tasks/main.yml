@@ -15,13 +15,6 @@
   when: (ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora')
   changed_when: false
 
-- name: install fedora required packages
-  package:
-    name:
-      - procps-ng
-    state: present
-  when: ansible_distribution == 'Fedora'
-
 - name: Populate service facts
   shell: |
     set -o pipefail
@@ -56,3 +49,13 @@
 
 - name: start dns stats install
   include: server-stats.yml
+
+- name: deploy resolv.conf template
+  template:
+    src: resolvconf/resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  when: ansible_virtualization_type != "docker"

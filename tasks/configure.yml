@@ -1,11 +1,5 @@
 ---
 
-#- name: "Create /etc/ahadns directory"
-#  file:
-#    path: /etc/ahadns
-#    state: directory
-#    mode: "0755"
-
 - name: "checking directories exist"
   stat:
     path: "{{ item }}"
@@ -67,7 +61,7 @@
 - name: download root hints
   shell: |
     set -o pipefail
-    wget http://www.internic.net/domain/named.root -O "/var/lib/unbound/root.hints"
+    wget https://www.internic.net/domain/named.root -O "/var/lib/unbound/root.hints"
     chmod 0644 "/var/lib/unbound/root.hints"
   args:
     executable: /bin/bash
@@ -106,10 +100,6 @@
   args:
     executable: /bin/bash
   changed_when: false
-
-- name: systemctl daemon-reload
-  systemd:
-    daemon_reload: yes
 
 - name: restart unbound
   systemd:

@@ -20,3 +20,5 @@ doh_endpoint: "doh.{{ server_fqdn }}"
 dot_endpoint: "dot.{{ server_fqdn }}"
 
 letsencrypt_email: "test@test.com"
+
+dhparam_key_size: 4096

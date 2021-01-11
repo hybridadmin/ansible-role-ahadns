@@ -78,6 +78,7 @@
 - name: test golang version
   shell: |
     set -o pipefail
+    which go
     {{ golang_path }}/go/bin/go version
   args:
     executable: /bin/bash

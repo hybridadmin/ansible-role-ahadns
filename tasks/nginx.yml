@@ -18,9 +18,11 @@
 
     - name: "Create Nginx streams directory"
       file:
-        path: /etc/nginx/streams-enabled
+        path: "{{ item }}"
         state: directory
         mode: "0755"
+      with_items:
+        - "/etc/nginx/streams-enabled"
 
     - name: Secure Nginx TLS versions
       lineinfile:
@@ -76,22 +78,6 @@
       with_items:
         - "{{ nginx_conf_files }}"
 
-- name: Check if dhparams exist
-  stat:
-    path: /etc/ssl/certs/aha-dhparams.pem
-  register: dhparams_exist
-
-- name: Generate 4096-bit aha-dhparams.pem (This can take a while!)
-  shell: |
-    set -o pipefail
-    openssl dhparam -out /etc/ssl/certs/aha-dhparams.pem 4096
-  args:
-    executable: /bin/bash
-  become: true
-  when:
-    - nginx_dhparam_harden
-    - not dhparams_exist.stat.exists
-
 # check nginx conf before service restart
 - name: test nginx config
   shell: |
@@ -110,3 +96,4 @@
     daemon_reload: yes
     name: nginx
   ignore_errors: yes
+  changed_when: false

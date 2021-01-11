@@ -37,3 +37,66 @@
     loop: "{{ ssl_certs_exist.results }}"
 
   when: ansible_virtualization_type != "docker"
+
+- name: create dummy nginx ssl certs
+  block:
+  - name: "Create dummy ssl directory"
+    file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+    with_items:
+      - "/etc/letsencrypt/live/{{ server_fqdn }}"
+      - "/etc/letsencrypt/live/{{ doh_endpoint }}"
+      - "/etc/letsencrypt/live/{{ dot_endpoint }}"
+
+  - name: Create self-signed certificates, if configured.
+    command: >
+      openssl req -x509 -nodes -subj '/CN={{ item.fqdn }}' -days 365
+      -newkey rsa:4096 -sha256 -keyout {{ item.privkey }} -out {{ item.cert }}
+      creates={{ item.cert }}
+    with_items: "{{ letsencrypt_ssl_certs }}"
+
+  when: ansible_virtualization_type == "docker"
+
+- name: Check if dhparams exist
+  stat:
+    path: /etc/nginx/ssl/aha-dhparams.pem
+  register: dhparams_exist
+
+- name: Enable start haveged service
+  systemd:
+    name: "haveged"
+    enabled: yes
+    state: started
+  changed_when: false
+  when: not dhparam_remote_get
+
+- name: Generate 4096-bit aha-dhparams.pem (This can take a while!)
+  shell: |
+    set -o pipefail
+    openssl dhparam -out /etc/nginx/ssl/aha-dhparams.pem {{ dhparam_key_size }}
+  args:
+    executable: /bin/bash
+  become: true
+  when:
+    - not dhparams_exist.stat.exists
+    - not dhparam_remote_get
+
+- name: disable and mask haveged service
+  systemd:
+    name: "haveged"
+    state: stopped
+    enabled: no
+  changed_when: false
+  when: not dhparam_remote_get
+
+- name: get dhparams with 4096 bit key size
+  shell: |
+    set -o pipefail
+    curl https://2ton.com.au/dhparam/4096 -o /etc/nginx/ssl/aha-dhparams.pem
+  args:
+    executable: /bin/bash
+  become: true
+  changed_when: false
+  when: dhparam_remote_get

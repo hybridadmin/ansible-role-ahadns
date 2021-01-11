@@ -1,8 +1,14 @@
 # HTTP listen port
+{% if ansible_default_ipv6.address is defined %}
 listen = [
     "127.0.0.1:8053",
     "[::1]:8053"
 ]
+{% else %}
+listen = [
+    "127.0.0.1:8053"
+]
+{% endif %}
 
 # Local address and port for upstream DNS
 # If left empty, a local address is automatically chosen.
@@ -29,10 +35,16 @@ path = "/dns-query"
 # or the response is too large.
 # For "tcp", only TCP will be used.
 # For "tcp-tls", DNS-over-TLS (RFC 7858) will be used to secure the upstream connection.
+{% if ansible_default_ipv6.address is defined %}
 upstream = [
     "udp:127.0.0.1:53",
     "udp:[::1]:53"
 ]
+{% else %}
+upstream = [
+    "udp:127.0.0.1:53"
+]
+{% endif %}
 
 # Upstream timeout
 timeout = 10
