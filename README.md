@@ -1,10 +1,11 @@
 # ahadns 
 
-role to setup a fully configured AhaDNS DNS server supporting plain DNS, DOH and DOT protocols
+Role to setup a fully configured AhaDNS DNS server supporting plain DNS, DOH and DOT protocols
 
 Requirements
 ------------
 
+The command below should be run to install any dependant ansible roles: 
 ```yaml
 ansible-galaxy install -r requirements.yml
 ```
@@ -12,8 +13,7 @@ ansible-galaxy install -r requirements.yml
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
+The variables below are set in `defaults/main.yml`:
 ```yaml
 # doh server variables
 doh_version: 2.2.4
@@ -35,6 +35,7 @@ dot_endpoint: "dot.{{ server_fqdn }}"
 
 letsencrypt_email: "test@test.com"
 
+# Nginx dhparam hardening variables
 dhparam_key_size: 4096
 ```
 
