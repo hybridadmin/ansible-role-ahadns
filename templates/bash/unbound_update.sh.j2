@@ -25,7 +25,7 @@ echo -e " ${TICK} \e[32m Converting to unbound format... \e[0m"
 cat blocklist.txt | grep '^[A-Za-z0-9åäöÅÄÖ]' | awk '{print "local-zone: \""$1"\" always_refuse"}' > unbound_blocklist.conf
 sleep 0.1
 echo -e " ${TICK} \e[32m Moving blocklist to unbound directory... \e[0m"
-sudo cp unbound_blocklist.conf "{{ unbound_config_dir }}/unbound/unbound_blocklist.conf"
+sudo cp unbound_blocklist.conf "{{ unbound_config_dir }}/unbound_blocklist.conf"
 sleep 0.1
 echo -e " ${TICK} \e[32m Cleanup old resources... \e[0m"
 rm unbound_blocklist.conf
@@ -47,7 +47,7 @@ echo -e " ${TICK} \e[32m Converting to unbound format... \e[0m"
 cat whitelist.txt | grep '^[A-Za-z0-9åäöÅÄÖ]' | awk '{print "local-zone: \""$1"\" transparent"}' > unbound_whitelist.conf
 sleep 0.1
 echo -e " ${TICK} \e[32m Moving whitelist to unbound directory... \e[0m"
-sudo cp unbound_whitelist.conf "{{ unbound_config_dir }}/unbound/unbound_whitelist.conf"
+sudo cp unbound_whitelist.conf "{{ unbound_config_dir }}/unbound_whitelist.conf"
 sleep 0.1
 echo -e " ${TICK} \e[32m Cleanup old resources... \e[0m"
 rm whitelist.txt
@@ -57,5 +57,5 @@ echo "Whitelist updated"
 
 echo "Trigger unbound reload"
 echo -e " ${TICK} \e[32m Triggering unbound to reload config... \e[0m"
-sudo unbound-control -c "{{ unbound_config_dir }}/unbound/unbound.conf" reload
+sudo unbound-control -c "{{ unbound_config_dir }}/unbound.conf" reload
 echo "Execution completed!"

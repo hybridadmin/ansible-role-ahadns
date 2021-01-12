@@ -53,16 +53,16 @@
 
 - name: Make sure that *.conf files are included in unbound.conf
   lineinfile:
-    path: "{{ unbound_config_dir }}/unbound/unbound.conf"
+    path: "{{ unbound_config_dir }}/unbound.conf"
     state: present
     regexp: '^include:.\*\.conf\"$'
-    line: 'include: "{{ unbound_config_dir }}/unbound/unbound.conf.d/*.conf"'
+    line: 'include: "{{ unbound_confd_dir }}/*.conf"'
 
 - name: download root hints
   shell: |
     set -o pipefail
-    wget https://www.internic.net/domain/named.root -O "/var/lib/unbound/root.hints"
-    chmod 0644 "/var/lib/unbound/root.hints"
+    wget https://www.internic.net/domain/named.root -O "{{ unbound_lib_dir }}/root.hints"
+    chmod 0644 "{{ unbound_lib_dir }}/root.hints"
   args:
     executable: /bin/bash
   check_mode: no
@@ -96,7 +96,7 @@
 - name: test unbound configuration
   shell:  |
     set -o pipefail
-    unbound-checkconf "{{ unbound_config_dir }}/unbound/unbound.conf"
+    unbound-checkconf "{{ unbound_config_dir }}/unbound.conf"
   args:
     executable: /bin/bash
   changed_when: false

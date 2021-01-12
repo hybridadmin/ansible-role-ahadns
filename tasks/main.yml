@@ -47,8 +47,8 @@
 - name: start doh-server install
   include: doh-server.yml
 
-- name: start dns stats install
-  include: server-stats.yml
+#- name: start dns stats install
+#  include: server-stats.yml
 
 - name: deploy resolv.conf template
   template:

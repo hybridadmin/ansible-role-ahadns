@@ -21,8 +21,8 @@ server:
     extended-statistics: yes
 
     # Block and whitelist (order is important)
-    include: {{ unbound_config_dir }}/unbound/unbound_blocklist.conf
-    include: {{ unbound_config_dir }}/unbound/unbound_whitelist.conf
+    include: {{ unbound_config_dir }}/unbound_blocklist.conf
+    include: {{ unbound_config_dir }}/unbound_whitelist.conf
 
     # If no logfile is specified, syslog is used
     #logfile: "/var/log/unbound/unbound.log"
@@ -42,10 +42,10 @@ server:
 
     # The following line will configure unbound to perform cryptographic
     # DNSSEC validation using the root trust anchor.
-    # auto-trust-anchor-file: "/var/lib/unbound/root.key"
+    # auto-trust-anchor-file: "{{ unbound_lib_dir }}/root.key"
     
     # Use this only when you downloaded the list of primary root servers!
-    root-hints: "/var/lib/unbound/root.hints"
+    root-hints: "{{ unbound_lib_dir }}/root.hints"
 
     # Trust glue only if it is within the servers authority
     harden-glue: yes
