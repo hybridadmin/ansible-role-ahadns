@@ -18,7 +18,7 @@
       ff02::3 ip6-allhosts
 
       {{ ansible_default_ipv4.address }} {{ server_fqdn }}  {{ doh_endpoint }}  {{ dot_endpoint }}
-  when: ansible_virtualization_type != "docker"
+  when: not ansible_virtualization_type | regex_search("docker|container")
 
 - name: list required packages
   debug:

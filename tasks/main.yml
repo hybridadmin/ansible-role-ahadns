@@ -58,4 +58,4 @@
     group: root
     mode: 0644
     backup: yes
-  when: ansible_virtualization_type != "docker"
+  when: not ansible_virtualization_type | regex_search("docker|container")

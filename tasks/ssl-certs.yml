@@ -36,9 +36,9 @@
       - not item.stat.exists
     loop: "{{ ssl_certs_exist.results }}"
 
-  when: ansible_virtualization_type != "docker"
+  when: not ansible_virtualization_type | regex_search("docker|container")
 
-- name: create dummy nginx ssl certs
+- name: create temporary nginx ssl certs
   block:
   - name: "Create dummy ssl directory"
     file:
@@ -57,7 +57,7 @@
       creates={{ item.cert }}
     with_items: "{{ letsencrypt_ssl_certs }}"
 
-  when: ansible_virtualization_type == "docker"
+  when: ansible_virtualization_type | regex_search("docker|container")
 
 - name: Check if dhparams exist
   stat:
