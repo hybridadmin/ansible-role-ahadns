@@ -1,6 +1,8 @@
-# ahadns 
+# ahadns
 
-Role to setup a fully configured AhaDNS DNS server supporting plain DNS, DOH and DOT protocols
+![CI](https://github.com/hybridadmin/ansible-role-ahadns/workflows/CI/badge.svg?branch=main)
+
+> Role to setup a fully configured AhaDNS DNS server supporting plain DNS, DOH and DOT protocols
 
 Requirements
 ------------
