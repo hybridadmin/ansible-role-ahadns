@@ -6,6 +6,6 @@
     dhparam_remote_get: true
   tasks:
 
-    - name: "Include ansible-role-ahadns"
+    - name: "Include hybridadmin.ahadns"
       include_role:
-        name: "ansible-role-ahadns"
+        name: "hybridadmin.ahadns"
