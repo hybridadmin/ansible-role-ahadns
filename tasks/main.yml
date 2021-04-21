@@ -1,7 +1,8 @@
 ---
 # tasks file for ansible-role-ahadns
 
-- debug:
+- name: get server specs
+  debug:
     msg: "Identified machine with {{ num_cores }} cpu cores and {{ total_ram_mb }}mb RAM"
 
 - name: Wait for systemd to complete initialization. # noqa 303
