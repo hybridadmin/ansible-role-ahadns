@@ -8,5 +8,5 @@
 
     - name: "Include hybridadmin.ahadns"
       include_role:
-        name: "ansible-role-ahadns"
-#        name: "hybridadmin.ahadns"
+#        name: "ansible-role-ahadns"
+        name: "hybridadmin.ahadns"
