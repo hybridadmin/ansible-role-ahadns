@@ -58,6 +58,7 @@
       -newkey rsa:4096 -sha256 -keyout {{ item.privkey }} -out {{ item.cert }}
       creates={{ item.cert }}
     with_items: "{{ letsencrypt_ssl_certs }}"
+    changed_when: false
 
   when: ansible_virtualization_type | regex_search("docker|container")
 
@@ -81,6 +82,7 @@
   args:
     executable: /bin/bash
   become: true
+  changed_when: false
   when:
     - not dhparams_exist.stat.exists
     - not dhparam_remote_get

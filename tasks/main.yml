@@ -27,29 +27,29 @@
   register: systemd_resolved_status
 
 - name: disable systemd-resolved
-  include: systemd-resolved.yml
+  include_tasks: systemd-resolved.yml
   when: ('enabled' in systemd_resolved_status.stdout)
 
 - name: start package install
-  include: install.yml
+  include_tasks: install.yml
 
 - name: start server config
-  include: configure.yml
+  include_tasks: configure.yml
 
 - name: start ssl config
-  include: ssl-certs.yml
+  include_tasks: ssl-certs.yml
 
 - name: start nginx config
-  include: nginx.yml
+  include_tasks: nginx.yml
 
 - name: start golang install
-  include: golang.yml
+  include_tasks: golang.yml
 
 - name: start doh-server install
-  include: doh-server.yml
+  include_tasks: doh-server.yml
 
 - name: start dns stats install
-  include: server-stats.yml
+  include_tasks: server-stats.yml
 
 - name: deploy resolv.conf template
   template:
